@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import sys, os, re
-import urllib.request # To receive the html source code
+import urllib.request# To receive the html source code
 
 ### Check for file name and if file already exist ###
 def checkFileName():
@@ -40,15 +40,36 @@ def youTubeExtract(srcURL):
 ### Request the HTML source code of the given URL and extract the source### 
 def defaultExtract(srcURL): 
     try:
-        srcCode = urllib.request.urlopen(srcURL)
+        # Request with the Mozilla header to bypass server security features for bots and spider
+        req = urllib.request.Request(srcURL, headers={'User-Agent': 'Mozilla/5.0'})
         # HTML source code will be read as bytearray
-        srcCodeBytes = srcCode.read()
+        srcCodeBytes = urllib.request.urlopen(req).read()
         # Convert to UTF8 and ignore errors
         srcCodeString = srcCodeBytes.decode('utf8', 'ignore')
-        #Close the request
-        srcCode.close()
     except Exception as ex:
+        print(ex)
         return ""
+    # Extract the iframe content
+    iframe = re.findall ('iframe(.*\n?)iframe', srcCodeString, re.MULTILINE)
+    try:
+        i = 0
+        # Try for max 20 blocks
+        while i < 20:
+            # Check for typical stream parameters in the iframe description
+            if "width=" in iframe[i] and "allowfullscreen" in iframe[i]:
+                # Replace HTML encoding
+                code = '<iframe' + iframe[i] + 'iframe>\n'
+                code = code.replace("&quot;", "\"")
+                code = code.replace("&lt;", "<")
+                code = code.replace("&gt;", ">")
+                return code
+            else:
+                i += 1
+    except Exception as ex:
+        print(ex)
+        return ""
+    
+    return code
 
 ### Main function which receives the source URL as parameter ###
 def main(srcURL):    
@@ -58,7 +79,7 @@ def main(srcURL):
     # Get the file name and terminate if it is empty
     completeFileName = checkFileName()
     if completeFileName == "":
-        print("Script terminated!")
+        print("Script terminated with errors!")
         return
     
     # Is it a known website or default
@@ -73,7 +94,7 @@ def main(srcURL):
         return
     
     
-    print(completeFileName)
+    print('Output file location: ' + completeFileName)
     
     # Open the output file
     dstHTML = open(completeFileName, "w")
