@@ -56,7 +56,7 @@ def defaultExtract(srcURL):
         # Try for max 20 blocks
         while i < 20:
             # Check for typical stream parameters in the iframe description
-            if "width=" in iframe[i] and "allowfullscreen" in iframe[i]:
+            if "width=" in iframe[i] and "allowfullscreen" in iframe[i] and "allowtransparency" not in iframe[i]:
                 # Replace HTML encoding
                 code = '<iframe' + iframe[i] + 'iframe>\n'
                 code = code.replace("&quot;", "\"")
